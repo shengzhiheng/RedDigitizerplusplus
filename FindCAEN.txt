@@ -1,0 +1,50 @@
+set(CAEN_DIR "C:\\Program Files\\CAEN"
+        CACHE FILEPATH "Directory where CAEN VME, Comm, and digitizer files are found")
+
+# Checks of folders
+if(NOT IS_DIRECTORY ${CAEN_DIR})
+  message(FATAL_ERROR "CAEN not found. Make sure to install VME, Comm and "
+          "Digitizers libraries at ${CAEN_DIR}")
+endif()
+
+if (NOT LINUX)
+  if(NOT IS_DIRECTORY ${CAEN_DIR}/VME)
+    message(FATAL_ERROR "CAEN/VME library folder does not exist")
+  endif()
+
+  if(NOT IS_DIRECTORY ${CAEN_DIR}/Comm)
+    message(FATAL_ERROR "CAEN/VME library folder does not exist")
+  endif()
+
+  if(NOT IS_DIRECTORY ${CAEN_DIR}/Digitizers)
+    message(FATAL_ERROR "CAEN/VME library folder does not exist")
+  endif()
+endif()
+
+message("-- ${CAEN_DIR} Found!")
+
+if(LINUX)
+  target_include_directories(${PROJECT_NAME} INTERFACE SYSTEM
+  $<BUILD_INTERFACE:${CAEN_DIR}>/include)
+
+  # include_directories(SYSTEM ${CAEN_DIR}/VME/include)
+  add_library(CAENVME SHARED IMPORTED GLOBAL)
+  set_target_properties(CAENVME PROPERTIES IMPORTED_LOCATION ${CAEN_DIR}/lib/libCAENVME.so)
+  add_library(CAENComm SHARED IMPORTED GLOBAL)
+  set_target_properties(CAENComm PROPERTIES IMPORTED_LOCATION ${CAEN_DIR}/lib/libCAENComm.so)
+  add_library(CAENDigitizer SHARED IMPORTED GLOBAL)
+  set_target_properties(CAENDigitizer PROPERTIES IMPORTED_LOCATION ${CAEN_DIR}/lib/libCAENDigitizer.so)
+else()
+  target_include_directories(${PROJECT_NAME} INTERFACE SYSTEM
+  $<BUILD_INTERFACE:${CAEN_DIR}>/VME/include
+  $<BUILD_INTERFACE:${CAEN_DIR}>/Comm/include
+  $<BUILD_INTERFACE:${CAEN_DIR}>/Digitizers/Library/include)
+
+  # include_directories(SYSTEM ${CAEN_DIR}/VME/include)
+  add_library(CAENVME SHARED IMPORTED GLOBAL)
+  set_target_properties(CAENVME PROPERTIES IMPORTED_IMPLIB ${CAEN_DIR}/VME/lib/x86_64/CAENVMELib.lib)
+  add_library(CAENComm SHARED IMPORTED GLOBAL)
+  set_target_properties(CAENComm PROPERTIES IMPORTED_IMPLIB ${CAEN_DIR}/Comm/lib/x86_64/CAENComm.lib)
+  add_library(CAENDigitizer SHARED IMPORTED GLOBAL)
+  set_target_properties(CAENDigitizer PROPERTIES IMPORTED_IMPLIB ${CAEN_DIR}/Digitizers/Library/lib/x86_64/CAENDigitizer.lib)
+endif()
