@@ -513,9 +513,9 @@ class CAENWaveforms {
                                      _data.cbegin() + _record_length*(ch+1));
     }
 
-//    [[nodiscard]] std::span<DataType> getData() noexcept {
-//        return std::span<DataType>(_data);
-//    }
+    [[nodiscard]] std::span<DataType> getData() noexcept {
+        return std::span(_data.data(), _data.size());
+    }
 
  private:
     // Raw waveform data as one continuous 1-D array
@@ -1157,7 +1157,8 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
 
     } else if (Family == CAENDigitizerFamilies::x740) {
         uint32_t group_mask = 0;
-        for (std::size_t grp_n = 0; grp_n < gr_configs.size(); grp_n++) {
+        uint16_t num_grps = 4;
+        for (std::size_t grp_n = 0; grp_n < num_grps; grp_n++) {
             group_mask |= gr_configs[grp_n].Enabled << grp_n;
         }
 
@@ -1169,7 +1170,7 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
                                                   group_mask);
         _print_if_err("CAEN_DGTZ_SetGroupSelfTrigger", __FUNCTION__);
 
-        for (std::size_t grp_n = 0; grp_n < gr_configs.size(); grp_n++) {
+        for (std::size_t grp_n = 0; grp_n < num_grps; grp_n++) {
             auto gr_config = gr_configs[grp_n];
             // Trigger stuff
 

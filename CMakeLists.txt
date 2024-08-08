@@ -21,8 +21,11 @@ file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include
 # target: add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME} ${headers} INTERFACE)
 
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
-#set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 
 target_include_directories(
         ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
