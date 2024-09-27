@@ -16,7 +16,8 @@
 #pragma once
 
 // include red digitizer plus plus library
-#include "RedDigitizer++"
+#include "red_digitizer_helper.hpp"
+#include "logger_helpers.hpp"
 
 // declare to be C compatible, so it can be imported into python
 #ifdef __cplusplus
