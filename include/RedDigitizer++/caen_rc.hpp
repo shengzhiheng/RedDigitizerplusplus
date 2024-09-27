@@ -102,6 +102,124 @@ unsigned int caen_get_current_max_buffer(void* caen_handle) {
     return 0;
 }
 
+// setup caen
+void caen_setup(void* caen_handle, const void* global_config, const void* group_configs) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        const CAENGlobalConfig* config = static_cast<const CAENGlobalConfig*>(global_config);
+        const std::array<CAENGroupConfig, 8>* groups = static_cast<const std::array<CAENGroupConfig, 8>*>(group_configs);
+        caen_instance->Setup(*config, *groups);
+    }
+}
+
+// reset caen
+void caen_reset(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->Reset();
+    }
+}
+
+// enable acquisition
+void caen_enable_acquisition(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->EnableAcquisition();
+    }
+}
+
+// disable acquisition
+void caen_disable_acquisition(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->DisableAcquisition();
+    }
+}
+
+// write register
+void caen_write_register(void* caen_handle, uint32_t addr, uint32_t value) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->WriteRegister(addr, value);
+    }
+}
+
+// read register
+void caen_read_register(void* caen_handle, uint32_t addr, uint32_t* value) {
+    if (caen_handle && value) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->ReadRegister(addr, *value);
+    }
+}
+
+// write bits
+void caen_write_bits(void* caen_handle, uint32_t addr, uint32_t value, uint8_t pos, uint8_t len) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->WriteBits(addr, value, pos, len);
+    }
+}
+
+// software trigger
+void caen_software_trigger(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->SoftwareTrigger();
+    }
+}
+
+// get event in buffer
+unsigned int caen_get_events_in_buffer(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        return caen_instance->GetEventsInBuffer();
+    }
+    return 0;
+}
+
+// retrieve data until events
+int caen_retrieve_data_until_n_events(void* caen_handle, unsigned int n) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        return caen_instance->RetrieveDataUntilNEvents(n) ? 1 : 0;
+    }
+    return 0;
+}
+
+// decode event
+const void* caen_decode_event(void* caen_handle, unsigned int i) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        return caen_instance->DecodeEvent(i).get();  // Assuming DecodeEvent returns a pointer to event
+    }
+    return nullptr;
+}
+
+// decode events
+void caen_decode_events(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->DecodeEvents();
+    }
+}
+
+// clear data
+void caen_clear_data(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->ClearData();
+    }
+}
+
+// get waveform
+const void* caen_get_waveform(void* caen_handle, std::size_t i) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        return caen_instance->GetWaveform(i).get();  // Assuming GetWaveform returns a shared pointer
+    }
+    return nullptr;
+}
+
 // close out extern C
 #ifdef __cplusplus
 }
