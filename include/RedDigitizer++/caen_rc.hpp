@@ -19,6 +19,14 @@
 #include "red_digitizer_helper.hpp"
 #include "logger_helpers.hpp"
 
+// using RedDigitizer namespace declarations
+using RedDigitizer::CAEN;
+using RedDigitizer::CAENDigitizerModel;
+using RedDigitizer::CAENConnectionType;
+using RedDigitizer::CAENGlobalConfig;
+using RedDigitizer::CAENGroupConfig;
+using RedDigitizer::iostream_wrapper;
+
 // declare to be C compatible, so it can be imported into python
 #ifdef __cplusplus
 extern "C" {
@@ -29,10 +37,10 @@ extern "C" {
 void* caen_init(int model, int conn_type, int link_num, int conet_node, unsigned int vme_addr) {
     try {
         CAENDigitizerModel caen_model = static_cast<CAENDigitizerModel>(model);
-        CAENConnectionType caen_ct = static_cast<CAENConnectionType>(connection_type);
+        CAENConnectionType caen_ct = static_cast<CAENConnectionType>(conn_type);
 
         // Use the default Logger and EventBufferSize
-        auto caen_instance = new CAEN<>(std::make_shared<iostream_wrapper>(), caen_model, caen_ct, link_num, conet_node, vme_base_address);
+        auto caen_instance = new CAEN<>(std::make_shared<iostream_wrapper>(), caen_model, caen_ct, link_num, conet_node, vme_addr);
 
         return static_cast<void*>(caen_instance);  // Return a generic void* pointer
     } catch (const std::exception& ex) {
@@ -67,11 +75,11 @@ const void* caen_get_board_info(void* caen_handle) {
     return nullptr;
 }
 
-// get group configuration
-const void* caen_get_group_configs(void* caen_handle) {
+// get global configuration
+const void* caen_get_global_configs(void* caen_handle) {
     if (caen_handle) {
         CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
-        return static_cast<const void*>(&caen_instance->GetGroupConfigurations());
+        return static_cast<const void*>(&caen_instance->GetGlobalConfiguration());
     }
     return nullptr;
 }

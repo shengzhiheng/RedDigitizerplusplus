@@ -1,2 +1,7 @@
 *debug
 *.idea
+CMakeCache.txt
+*.so
+CMakeFiles/
+Makefile
+*.cmake
