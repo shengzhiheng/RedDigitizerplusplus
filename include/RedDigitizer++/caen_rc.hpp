@@ -66,6 +66,32 @@ int caen_is_connected(void* caen_handle) {
     return 0;  // Return 0 if caen_handle is null
 }
 
+// checks for error
+int caen_has_error(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        return caen_instance->HasError() ? 1 : 0;  // Return 1 for true, 0 for false
+    }
+    return 0;
+}
+
+// checks for warning
+int caen_has_warning(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        return caen_instance->HasWarning() ? 1 : 0;  // Return 1 for true, 0 for false
+    }
+    return 0;
+}
+
+// reset warning flag
+void caen_reset_warning(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->ResetWarning();
+    }
+}
+
 // get board info
 const void* caen_get_board_info(void* caen_handle) {
     if (caen_handle) {
@@ -184,6 +210,14 @@ unsigned int caen_get_events_in_buffer(void* caen_handle) {
         return caen_instance->GetEventsInBuffer();
     }
     return 0;
+}
+
+// retrieve data
+void caen_retrieve_data(void* caen_handle) {
+    if (caen_handle) {
+        CAEN<>* caen_instance = static_cast<CAEN<>*>(caen_handle);
+        caen_instance->RetrieveData();
+    }
 }
 
 // retrieve data until events
