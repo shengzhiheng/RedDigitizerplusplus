@@ -263,6 +263,69 @@ const void* caen_get_waveform(void* caen_handle, std::size_t i) {
     return nullptr;
 }
 
+// get waveform record length
+uint32_t wf_get_record_length(void* waveform_handle) {
+    if (waveform_handle) {
+        auto* waveform = static_cast<CAEN<T, N>::CAENWaveforms<uint16_t>*>(waveform_handle);
+        return waveform->getRecordLength();
+    }
+    return 0;
+}
+
+// get total size
+uint32_t wf_get_total_size(void* waveform_handle) {
+    if (waveform_handle) {
+        auto* waveform = static_cast<CAEN<T, N>::CAENWaveforms<uint16_t>*>(waveform_handle);
+        return waveform->getTotalSize();
+    }
+    return 0;
+}
+
+// get number of enabled channels
+uint32_t wf_get_num_enabled_channels(void* waveform_handle) {
+    if (waveform_handle) {
+        auto* waveform = static_cast<CAEN<T, N>::CAENWaveforms<uint16_t>*>(waveform_handle);
+        return waveform->getNumEnabledChannels();
+    }
+    return 0;
+}
+
+// get waveform data of one channel
+uint16_t* wf_get_channel_data(void* waveform_handle, std::size_t ch, std::size_t* out_size) {
+    if (!waveform_handle) return nullptr;
+    CAEN<T, N>::CAENWaveforms<uint16_t>* waveform = static_cast<CAEN<T, N>::CAENWaveforms<uint16_t>*>(waveform_handle);
+
+    // Get the data vector for the given channel
+    std::vector<uint16_t> data = waveform->get(ch);
+
+    // Set the size of the output array
+    *out_size = data.size();
+
+    // Allocate memory for the data to be returned (caller needs to free this)
+    uint16_t* data_array = new uint16_t[data.size()];
+    std::copy(data.begin(), data.end(), data_array);
+
+    return data_array;  // Return the pointer to the data
+}
+// get waveform for all channels
+template<typename T, size_t N>
+uint16_t* wf_get_data(void* waveform_handle, std::size_t* out_size) {
+    if (!waveform_handle) return nullptr;
+    CAEN<T, N>::CAENWaveforms<uint16_t>* waveform = static_cast<CAEN<T, N>::CAENWaveforms<uint16_t>*>(waveform_handle);
+
+    // Get the data span
+    std::span<uint16_t> data_span = waveform->getData();
+
+    // Set the size of the output array
+    *out_size = data_span.size();
+
+    // Allocate memory for the data to be returned (caller needs to free this)
+    uint16_t* data_array = new uint16_t[data_span.size()];
+    std::copy(data_span.begin(), data_span.end(), data_array);
+
+    return data_array;  // Return the pointer to the data
+}
+
 // close out extern C
 #ifdef __cplusplus
 }

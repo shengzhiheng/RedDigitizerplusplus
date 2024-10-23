@@ -260,7 +260,7 @@ struct CAENGlobalConfig {
     //  {SAMPLE_RATE}/2^{DecimationFactor}
     // Using the average of the consecutive 2*DecimationFactor
     // samples for the output value. Trigger is processed after decimation
-    uint16_t DecimationFactor = 1;
+    uint16_t DecimationFactor = 0;
 
     // From CAEN API: For a MajorityLevel, m, the trigger fires when at
     // least m+1 of the enabled trigger requests are over-threshold inside
@@ -1193,9 +1193,9 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
                                                       trig_mask);
             _print_if_err("CAEN_DGTZ_SetChannelGroupMask", __FUNCTION__);
 
-            // Set acquisition mask
-//            auto acq_mask = gr_config.AcquisitionMask.get();
-//            WriteBits(0x10A8 | (grp_n << 8), acq_mask, 0, 8);
+           // Set acquisition mask
+           auto acq_mask = gr_config.AcquisitionMask.get();
+           WriteBits(0x10A8 | (grp_n << 8), acq_mask, 0, 8);
 
             // DCCorrections should be of length
             // NumberofChannels / NumberofGroups.
