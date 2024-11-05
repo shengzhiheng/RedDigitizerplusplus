@@ -279,7 +279,7 @@ struct ChannelsMask {
     std::array<bool, kNumCHs> CH
         = {false, false, false, false, false, false, false, false};
 
-    uint8_t get() noexcept {
+    uint8_t get() const noexcept {
         uint8_t out = 0u;
         for(std::size_t i = 0; i < CH.size(); i++) {
             out |= static_cast<uint8_t>(CH[i]) << i;
@@ -297,6 +297,18 @@ struct ChannelsMask {
         }
 
         return CH[iter];
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const ChannelsMask& mask) {
+        os << "[";
+        for (std::size_t i = 0; i < kNumCHs; ++i) {
+            os << (mask.CH[i] ? "1" : "0");
+            if (i < kNumCHs - 1) {
+                os << ", ";
+            }
+        }
+        os << "] (0x" << std::hex << static_cast<int>(mask.get()) << ")";
+        return os;
     }
 };
 
@@ -1091,6 +1103,7 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
     // so we treat it like a global config, and use 0 as a placeholder.
     _err_code = CAEN_DGTZ_SetTriggerPolarity(handle, 0, _global_config.TriggerPolarity);
     _print_if_err("CAEN_DGTZ_SetTriggerPolarity", __FUNCTION__);
+    WriteBits(0x8000, _global_config.TriggerPolarity, 6);
 
     _err_code = CAEN_DGTZ_SetIOLevel(handle, _global_config.IOLevel);
     _print_if_err("CAEN_DGTZ_SetIOLevel", __FUNCTION__);
@@ -1099,7 +1112,7 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
     // Board config register
     // 0 = Trigger overlapping not allowed
     // 1 = trigger overlapping allowed
-    WriteBits(0x8000, _global_config.TriggerOverlappingEn, 1);
+    // WriteBits(0x8000, _global_config.TriggerOverlappingEn, 1);
 
     WriteBits(0x8100, _global_config.MemoryFullModeSelection, 5);
 
@@ -1222,6 +1235,9 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
             WriteBits(kGlobalTriggerMaskAddr, 1, 27);  // TRG-IN AND internal trigger,
             // and to serve as gate
             WriteBits(0x811C, 1, 10);  // TRG-IN as gate
+        } else {
+            WriteBits(kGlobalTriggerMaskAddr, 0, 27);
+            WriteBits(0x811C, 0, 10); 
         }
 
         if (trg_out) {
