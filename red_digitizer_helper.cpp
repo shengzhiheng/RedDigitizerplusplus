@@ -64,7 +64,8 @@ PYBIND11_MODULE(red_caen, m) {
         .value("ACQ_AND_EXTOUT", CAEN_DGTZ_TriggerMode_t::CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT)
         ;
     
-    py::class_<RedDigitizer::CAENEvent>(m, "CAENEvent")
+    py::class_<RedDigitizer::CAENEvent, std::shared_ptr<RedDigitizer::CAENEvent>>(m, "CAENEvent")
+        .def(py::init<int>(), py::arg("handle"))
         .def("get_data", [](const RedDigitizer::CAENEvent &self) {
             const auto* data = self.getData();
             return convertToPythonData(data);  // Convert to a Python-usable structure
@@ -235,6 +236,7 @@ PYBIND11_MODULE(red_caen, m) {
         .def("DecodeEvents", &RedDigitizer::CAEN<>::DecodeEvents)
         .def("ClearData", &RedDigitizer::CAEN<>::ClearData)
         .def("GetNumberOfEvents", &RedDigitizer::CAEN<>::GetNumberOfEvents)
+        .def("GetCurrentPossibleMaxBuffer", &RedDigitizer::CAEN<>::GetCurrentPossibleMaxBuffer)
         .def("GetEvent", &RedDigitizer::CAEN<>::GetEvent,
             py::arg("i"))
         .def("GetEventsInBuffer", &RedDigitizer::CAEN<>::GetEventsInBuffer)

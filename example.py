@@ -52,8 +52,8 @@ global_back = caen.GetGlobalConfiguration()
 print(global_back)
 
 groups_back = caen.GetGroupConfigurations()
-for g in groups_back:
-    print(g)
+# for g in groups_back:
+#     print(g)
 
 caen.EnableAcquisition()
 for i in range(2000):
@@ -78,13 +78,16 @@ print(event.get_info())
 data = event.get_data()
 
 print(data.ch_size)
-plt.figure()
-for i in range(32):
-    plt.plot(np.array(data.data_channel[i]))
-plt.show()
+# plt.figure()
+# for i in range(32):
+#     plt.plot(np.array(data.data_channel[i]))
+# plt.show()
 
-caen.RetrieveDataUntilNEvents(caen.GetEventsInBuffer()-1)
+caen.RetrieveDataUntilNEvents(caen.GetEventsInBuffer())
 caen.DecodeEvents()
 print(f"buffer: {caen.GetEventsInBuffer()}, retrieved: {caen.GetNumberOfEvents()}")
 
+caen.ClearData()
+print(caen.GetCurrentPossibleMaxBuffer())
+print(f"buffer: {caen.GetEventsInBuffer()}, retrieved: {caen.GetNumberOfEvents()}")
 print("All done!")

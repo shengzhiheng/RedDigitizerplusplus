@@ -383,6 +383,7 @@ class CAENEvent {
                         translate_caen_error_code(_err_code) << "\n";
             }
         }
+        Data = nullptr;
     }
 
     [[nodiscard]] const CAEN_DGTZ_ErrorCode& getError() const {
@@ -613,6 +614,7 @@ class CAEN {
                                    translate_caen_error_code(_err_code));
                 }
             }
+            Buffer = nullptr;
         }
     };
 
@@ -850,10 +852,10 @@ class CAEN {
                 "resources, what went wrong?");
 
             // Before closing, we clear all memory.
-            _caen_raw_data.reset();
             for(auto& event : _events) {
                 event.reset();
             }
+            _caen_raw_data.reset();
 
             _err_code = CAEN_DGTZ_CloseDigitizer(_caen_api_handle);
             _print_if_err("CAEN_DGTZ_CloseDigitizer", __FUNCTION__,
