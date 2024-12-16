@@ -2,6 +2,7 @@ import red_caen
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+import sbcbinaryformat as bf
 
 caen = red_caen.CAEN(
     red_caen.iostream_wrapper(), 
@@ -10,6 +11,8 @@ caen = red_caen.CAEN(
     0,
     0,
     0)
+
+model_constants = red_caen.GetCAENDigitizerModelConstants()
 
 # global config
 global_config = red_caen.CAENGlobalConfig()
@@ -51,6 +54,7 @@ caen.Setup(global_config, group_configs)
 global_back = caen.GetGlobalConfiguration()
 print(global_back)
 
+
 groups_back = caen.GetGroupConfigurations()
 # for g in groups_back:
 #     print(g)
@@ -60,11 +64,11 @@ for i in range(2000):
     caen.SoftwareTrigger()
     time.sleep(0.001)
 
-# time.sleep(2)
+time.sleep(2)
 
-# caen.RetrieveDataUntilNEvents(caen.GetEventsInBuffer())
-# print(f"buffer: {caen.GetEventsInBuffer()}, retrieved: {caen.GetNumberOfEvents()}")
-# caen.DecodeEvents()
+caen.RetrieveDataUntilNEvents(caen.GetEventsInBuffer()) # constant in parameter, and check if it's successful
+print(f"buffer: {caen.GetEventsInBuffer()}, retrieved: {caen.GetNumberOfEvents()}")
+caen.DecodeEvents()
 
 while caen.GetEventsInBuffer()>=500:
     print(f"buffer: {caen.GetEventsInBuffer()}, retrieved: {caen.GetNumberOfEvents()}")
@@ -77,6 +81,9 @@ event = caen.GetEvent(0)
 print(event.get_info())
 data = event.get_data()
 
+# print(data)
+# bf()
+
 print(data.ch_size)
 # plt.figure()
 # for i in range(32):
@@ -87,7 +94,13 @@ caen.RetrieveDataUntilNEvents(caen.GetEventsInBuffer())
 caen.DecodeEvents()
 print(f"buffer: {caen.GetEventsInBuffer()}, retrieved: {caen.GetNumberOfEvents()}")
 
+event = caen.GetEvent(0)
+print(event.get_data())
+# print(wf)
+print(f"buffer: {caen.GetEventsInBuffer()}, retrieved: {caen.GetNumberOfEvents()}")
+
 caen.ClearData()
 print(caen.GetCurrentPossibleMaxBuffer())
 print(f"buffer: {caen.GetEventsInBuffer()}, retrieved: {caen.GetNumberOfEvents()}")
 print("All done!")
+

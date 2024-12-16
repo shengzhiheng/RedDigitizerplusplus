@@ -26,6 +26,20 @@ CAEN_DGTZ_UINT16_EVENT_Python convertToPythonData(const CAEN_DGTZ_UINT16_EVENT_t
 PYBIND11_MODULE(red_caen, m) {
     m.doc() = "Python bindings for RedDigitizer++";
 
+    py::class_<RedDigitizer::CAENDigitizerModelConstants>(m, "CAENDigitizerModelConstants")
+        .def_readonly("ADCResolution", &RedDigitizer::CAENDigitizerModelConstants::ADCResolution)
+        .def_readonly("AcquisitionRate", &RedDigitizer::CAENDigitizerModelConstants::AcquisitionRate)
+        .def_readonly("MemoryPerChannel", &RedDigitizer::CAENDigitizerModelConstants::MemoryPerChannel)
+        .def_readonly("NumChannels", &RedDigitizer::CAENDigitizerModelConstants::NumChannels)
+        .def_readonly("NumberOfGroups", &RedDigitizer::CAENDigitizerModelConstants::NumberOfGroups)
+        .def_readonly("NumChannelsPerGroup", &RedDigitizer::CAENDigitizerModelConstants::NumChannelsPerGroup)
+        .def_readonly("MaxNumBuffers", &RedDigitizer::CAENDigitizerModelConstants::MaxNumBuffers)
+        .def_readonly("NLOCToRecordLength", &RedDigitizer::CAENDigitizerModelConstants::NLOCToRecordLength)
+        .def_readonly("VoltageRanges", &RedDigitizer::CAENDigitizerModelConstants::VoltageRanges);
+
+    // Bind the getter function to access the map as a dictionary
+    m.def("GetCAENDigitizerModelConstants", &RedDigitizer::GetCAENDigitizerModelConstants);
+
     py::enum_<RedDigitizer::CAENDigitizerFamilies>(m, "CAENDigitizerFamilies")
 #ifndef NDEBUG
         .value("DEBUG", RedDigitizer::CAENDigitizerFamilies::DEBUG)
@@ -64,7 +78,7 @@ PYBIND11_MODULE(red_caen, m) {
         .value("ACQ_AND_EXTOUT", CAEN_DGTZ_TriggerMode_t::CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT)
         ;
     
-    py::class_<RedDigitizer::CAENEvent, std::shared_ptr<RedDigitizer::CAENEvent>>(m, "CAENEvent")
+    py::class_<RedDigitizer::CAENEvent>(m, "CAENEvent")
         .def(py::init<int>(), py::arg("handle"))
         .def("get_data", [](const RedDigitizer::CAENEvent &self) {
             const auto* data = self.getData();
@@ -95,7 +109,7 @@ PYBIND11_MODULE(red_caen, m) {
         .def_readwrite("ChannelMask", &CAEN_DGTZ_EventInfo_t::ChannelMask)
         .def_readwrite("EventCounter", &CAEN_DGTZ_EventInfo_t::EventCounter)
         .def_readwrite("TriggerTimeTag", &CAEN_DGTZ_EventInfo_t::TriggerTimeTag)
-                .def("__str__", [](const CAEN_DGTZ_EventInfo_t &info) {
+        .def("__str__", [](const CAEN_DGTZ_EventInfo_t &info) {
             // Specify a way to print all configuration
             std::ostringstream oss;
             oss << "CAEN Event Info:\n"
@@ -110,9 +124,9 @@ PYBIND11_MODULE(red_caen, m) {
         ;
 
     py::class_<RedDigitizer::CAENWaveforms<uint16_t>>(m, "CAENWaveforms")
-        .def("getRecordLength", &RedDigitizer::CAENWaveforms<uint16_t>::getRecordLength)
-        .def("getTotalSsize", &RedDigitizer::CAENWaveforms<uint16_t>::getTotalSize)
-        .def("getData", &RedDigitizer::CAENWaveforms<uint16_t>::getData, py::return_value_policy::reference);
+        .def("GetRecordLength", &RedDigitizer::CAENWaveforms<uint16_t>::getRecordLength)
+        .def("GetTotalSize", &RedDigitizer::CAENWaveforms<uint16_t>::getTotalSize)
+        .def("GetData", &RedDigitizer::CAENWaveforms<uint16_t>::getData, py::return_value_policy::reference);
 
 
     py::class_<RedDigitizer::CAENGlobalConfig>(m, "CAENGlobalConfig")
@@ -238,7 +252,7 @@ PYBIND11_MODULE(red_caen, m) {
         .def("GetNumberOfEvents", &RedDigitizer::CAEN<>::GetNumberOfEvents)
         .def("GetCurrentPossibleMaxBuffer", &RedDigitizer::CAEN<>::GetCurrentPossibleMaxBuffer)
         .def("GetEvent", &RedDigitizer::CAEN<>::GetEvent,
-            py::arg("i"))
+            py::arg("i"), py::return_value_policy::reference_internal)
         .def("GetEventsInBuffer", &RedDigitizer::CAEN<>::GetEventsInBuffer)
         .def("GetWaveform", [](RedDigitizer::CAEN<>& self, std::size_t i) {
             auto waveform = self.GetWaveform(i);

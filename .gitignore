@@ -6,3 +6,5 @@ CMakeFiles/
 Makefile
 *.cmake
 .vscode
+red_caen.egg-info
+build

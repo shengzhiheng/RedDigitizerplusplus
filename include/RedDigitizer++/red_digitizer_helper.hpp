@@ -183,6 +183,11 @@ const static inline std::unordered_map<CAENDigitizerModel, CAENDigitizerModelCon
     //     }}
 };
 
+// A helper function to use the constants in python
+std::unordered_map<CAENDigitizerModel, CAENDigitizerModelConstants> GetCAENDigitizerModelConstants() {
+    return CAENDigitizerModelsConstantsMap;
+}
+
 struct CAENGlobalConfig {
     // X730 max buffers is 1024
     // X740 max buffers is 1024
