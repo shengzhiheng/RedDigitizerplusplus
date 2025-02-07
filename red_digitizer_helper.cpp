@@ -272,6 +272,79 @@ PYBIND11_MODULE(red_caen, m) {
             }
             return py::array_t<uint16_t>();
         })
+        .def("GetWaveforms", [](RedDigitizer::CAEN<>& self) -> py::array_t<uint16_t> {
+            // Get the array of waveform pointers
+            auto waveforms = self.GetWaveforms(); // std::array<std::shared_ptr<...>, N>
+            const size_t num_waveforms = waveforms.size();
+        
+            // Find the first valid waveform to obtain the shape.
+            size_t valid_idx = 0;
+            while (valid_idx < num_waveforms && !waveforms[valid_idx]) {
+                ++valid_idx;
+            }
+            if (valid_idx == num_waveforms) {
+                throw std::runtime_error("No valid waveform found");
+            }
+            auto first_waveform = waveforms[valid_idx];
+        
+            // Get the shape from the first valid waveform.
+            const size_t channels = first_waveform->getNumEnabledChannels();
+            const size_t record_length = first_waveform->getRecordLength();
+        
+            // Total number of elements in the 3D array: [num_waveforms, channels, record_length].
+            const size_t total_elems = num_waveforms * channels * record_length;
+        
+            // Allocate a contiguous buffer to hold all the waveform data.
+            uint16_t* buffer = new uint16_t[total_elems];
+        
+            // For each waveform, copy its data into the correct position in the contiguous buffer.
+            for (size_t i = 0; i < num_waveforms; ++i) {
+                if (waveforms[i]) {
+                    auto data = waveforms[i]->getData(); // returns std::span<uint16_t>
+                    // Verify that the data size is as expected.
+                    if (data.size() != channels * record_length) {
+                        delete[] buffer;
+                        throw std::runtime_error("Waveform size mismatch");
+                    }
+                    // Copy the waveform data into the block for waveform i.
+                    std::memcpy(buffer + i * channels * record_length,
+                                data.data(),
+                                channels * record_length * sizeof(uint16_t));
+                } else {
+                    // If a waveform is missing, fill its block with zeros.
+                    std::memset(buffer + i * channels * record_length,
+                                0,
+                                channels * record_length * sizeof(uint16_t));
+                }
+            }
+        
+            // Create a capsule to ensure that the buffer is freed when the NumPy array is garbage-collected.
+            py::capsule free_buffer(buffer, [](void* f) {
+                uint16_t* buf = reinterpret_cast<uint16_t*>(f);
+                delete[] buf;
+            });
+        
+            // Set up the shape and strides for a 3D array.
+            // Shape: [num_waveforms, channels, record_length]
+            py::array::ShapeContainer shape = {
+                static_cast<py::ssize_t>(num_waveforms),
+                static_cast<py::ssize_t>(channels),
+                static_cast<py::ssize_t>(record_length)
+            };
+        
+            // Strides (in bytes): 
+            // - To go to the next waveform, skip over channels*record_length elements.
+            // - To go to the next channel, skip over record_length elements.
+            // - To go to the next sample, skip sizeof(uint16_t) bytes.
+            py::array::StridesContainer strides = {
+                static_cast<py::ssize_t>(channels * record_length * sizeof(uint16_t)),
+                static_cast<py::ssize_t>(record_length * sizeof(uint16_t)),
+                static_cast<py::ssize_t>(sizeof(uint16_t))
+            };
+        
+            // Return a NumPy array that takes ownership of the buffer.
+            return py::array_t<uint16_t>(shape, strides, buffer, free_buffer);
+        })        
         .def("EnableAcquisition", &RedDigitizer::CAEN<>::EnableAcquisition)
         .def("DisableAcquisition", &RedDigitizer::CAEN<>::DisableAcquisition)
         ;

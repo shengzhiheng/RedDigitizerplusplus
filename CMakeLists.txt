@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 
 # ---- Project ----
 project(red_caen 
-        VERSION 0.0.4 
+        VERSION 0.0.5 
         LANGUAGES CXX)
 
 # Set C++ standard
@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # ---- Include Directories ----
 set(PYBIND11_DIR "/home/sbc/anaconda3/envs/runcontrol/include/")
-set(PYTHON_DIR "/home/sbc/anaconda3/envs/runcontrol/include/python3.12")
+set(PYTHON_DIR "/home/sbc/anaconda3/envs/runcontrol/include/python3.13")
 
 include_directories(${PYBIND11_DIR})
 include_directories(${PYTHON_DIR})
