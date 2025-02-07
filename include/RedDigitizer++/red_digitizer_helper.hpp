@@ -405,6 +405,11 @@ class CAENEvent {
         return Info;
     }
 
+    // Return a pointer to Info
+    const CAEN_DGTZ_EventInfo_t* getInfoPtr() const {
+        return &Info;
+    }
+
     // This is a stupid function, char* is mutable so any interfacing
     // code will be unsafe by default. Blame CAEN, not me. Take max precautions.
     //
@@ -950,9 +955,20 @@ class CAEN {
 
         return _waveforms[i];
     }
-
+    // return a list of pointers to waveforms with data in it
     auto GetWaveforms() noexcept {
-        return _waveforms;
+        uint32_t numEvents = _caen_raw_data->NumEvents;
+        // Make sure we don't exceed the size of the array
+        if (numEvents > _waveforms.size()) {
+            numEvents = _waveforms.size();
+        }
+        // create a vector of pointers to the waveforms with data in it
+        std::vector<CAENWaveforms_ptr> waveforms_with_data;
+        waveforms_with_data.reserve(numEvents);
+        for (std::size_t i = 0; i < numEvents; ++i) {
+            waveforms_with_data.push_back(_waveforms[i]);
+        }
+        return waveforms_with_data;
     }
 
     // Returns a const pointer to CAENEvent. Its lifespans its
@@ -963,6 +979,28 @@ class CAEN {
         }
 
         return _events[i].get();
+    }
+
+    // return a vector of pointers to all events
+    std::vector<const CAENEvent*> GetEvents() const noexcept {
+        std::vector<const CAENEvent*> allEvents;
+        uint32_t numEvents = _caen_raw_data->NumEvents;
+        allEvents.reserve(numEvents);
+        for (std::size_t i = 0; i < numEvents; ++i) {
+            allEvents.push_back(_events[i].get());
+        }
+        return allEvents;
+    }
+
+    // return a vector of pointers to all events' info
+    std::vector<const CAEN_DGTZ_EventInfo_t*> GetEventsInfo() const noexcept {
+        std::vector<const CAEN_DGTZ_EventInfo_t*> allInfo;
+        uint32_t numEvents = _caen_raw_data->NumEvents;
+        allInfo.reserve(numEvents);
+        for (std::size_t i = 0; i < numEvents; ++i) {
+            allInfo.push_back(_events[i].get()->getInfoPtr());
+        }
+        return allInfo;
     }
 
     uint32_t GetCommTransferRate() noexcept {

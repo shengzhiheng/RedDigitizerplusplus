@@ -85,6 +85,18 @@ PYBIND11_MODULE(red_caen, m) {
             return convertToPythonData(data);  // Convert to a Python-usable structure
         })
         .def("get_info", &RedDigitizer::CAENEvent::getInfo)
+        // return info in a dictioanry format
+        .def("get_info_dict", [](const RedDigitizer::CAENEvent &self) -> py::dict {
+            const CAEN_DGTZ_EventInfo_t& info = self.getInfo();
+            py::dict info_dict;
+            info_dict["EventCounter"] = info.EventCounter;
+            info_dict["EventSize"] = info.EventSize;
+            info_dict["BoardId"] = info.BoardId;
+            info_dict["Pattern"] = info.Pattern;
+            info_dict["TriggerTimeTag"] = info.TriggerTimeTag;
+            info_dict["ChannelMask"] = info.ChannelMask;
+            return info_dict;
+        })
         ;
 
     py::class_<CAEN_DGTZ_UINT16_EVENT_Python>(m, "CAENEventData")
@@ -253,6 +265,37 @@ PYBIND11_MODULE(red_caen, m) {
         .def("GetCurrentPossibleMaxBuffer", &RedDigitizer::CAEN<>::GetCurrentPossibleMaxBuffer)
         .def("GetEvent", &RedDigitizer::CAEN<>::GetEvent,
             py::arg("i"), py::return_value_policy::reference_internal)
+        .def("GetEvents", &RedDigitizer::CAEN<>::GetEvents,
+            py::return_value_policy::reference_internal)
+        .def("GetEventsInfo", &RedDigitizer::CAEN<>::GetEventsInfo,
+            py::return_value_policy::reference_internal)
+        .def("GetEventsInfoDict", [](RedDigitizer::CAEN<>& self) -> py::dict {
+            auto events_info = self.GetEventsInfo();
+            py::list event_counters;
+            py::list event_sizes;
+            py::list board_ids;
+            py::list patterns;
+            py::list trigger_time_tags;
+            py::list channel_masks;
+            // loop through events to extract info
+            for (const auto& info : events_info) {
+                event_counters.append(info->EventCounter);
+                event_sizes.append(info->EventSize);
+                board_ids.append(info->BoardId);
+                patterns.append(info->Pattern);
+                trigger_time_tags.append(info->TriggerTimeTag);
+                channel_masks.append(info->ChannelMask);
+            }
+            // save data in a dictionary
+            py::dict info_dict;
+            info_dict["EventCounter"] = event_counters;
+            info_dict["EventSize"] = event_sizes;
+            info_dict["BoardId"] = board_ids;
+            info_dict["Pattern"] = patterns;
+            info_dict["ChannelMask"] = channel_masks;
+            info_dict["TriggerTimeTag"] = trigger_time_tags;
+            return info_dict;
+        })
         .def("GetEventsInBuffer", &RedDigitizer::CAEN<>::GetEventsInBuffer)
         .def("GetWaveform", [](RedDigitizer::CAEN<>& self, std::size_t i) {
             auto waveform = self.GetWaveform(i);
