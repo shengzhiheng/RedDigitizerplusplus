@@ -951,6 +951,10 @@ class CAEN {
         return _waveforms[i];
     }
 
+    auto GetWaveforms() noexcept {
+        return _waveforms;
+    }
+
     // Returns a const pointer to CAENEvent. Its lifespans its
     // managed by CAEN
     const CAENEvent* GetEvent(const std::size_t& i) noexcept {
@@ -1180,6 +1184,9 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
         uint16_t num_grps = 4;
         for (std::size_t grp_n = 0; grp_n < num_grps; grp_n++) {
             group_mask |= gr_configs[grp_n].Enabled << grp_n;
+        }
+        for (std::size_t grp_n = num_grps; grp_n < 8; grp_n++) {
+            _group_configs[grp_n].Enabled = false;
         }
 
         _err_code = CAEN_DGTZ_SetGroupEnableMask(handle, group_mask);
