@@ -146,7 +146,7 @@ PYBIND11_MODULE(red_caen, m) {
         .def_readwrite("MaxEventsPerRead", &RedDigitizer::CAENGlobalConfig::MaxEventsPerRead)
         .def_readwrite("RecordLength", &RedDigitizer::CAENGlobalConfig::RecordLength)
         .def_readwrite("PostTriggerPorcentage", &RedDigitizer::CAENGlobalConfig::PostTriggerPorcentage)
-        .def_readwrite("EXTAsGate", &RedDigitizer::CAENGlobalConfig::EXTAsGate)
+        .def_readwrite("TrgInAsGate", &RedDigitizer::CAENGlobalConfig::TrgInAsGate)
         .def_readwrite("EXTTriggerMode", &RedDigitizer::CAENGlobalConfig::EXTTriggerMode)
         .def_readwrite("SWTriggerMode", &RedDigitizer::CAENGlobalConfig::SWTriggerMode)
         .def_readwrite("CHTriggerMode", &RedDigitizer::CAENGlobalConfig::CHTriggerMode)
@@ -157,7 +157,7 @@ PYBIND11_MODULE(red_caen, m) {
         .def_readwrite("DecimationFactor", &RedDigitizer::CAENGlobalConfig::DecimationFactor)
         .def_readwrite("MajorityLevel", &RedDigitizer::CAENGlobalConfig::MajorityLevel)
         .def_readwrite("MajorityCoincidenceWindow", &RedDigitizer::CAENGlobalConfig::MajorityCoincidenceWindow)
-        .def_readwrite("MemoryFullModeSelection", &RedDigitizer::CAENGlobalConfig::MemoryFullModeSelection)
+        .def_readwrite("MemoryFullMode", &RedDigitizer::CAENGlobalConfig::MemoryFullMode)
         .def("__str__", [](const RedDigitizer::CAENGlobalConfig &config) {
             // Specify a way to print all configuration
             std::ostringstream oss;
@@ -169,13 +169,13 @@ PYBIND11_MODULE(red_caen, m) {
                 << "  SWTriggerMode: \t\t" << config.SWTriggerMode << "\n"
                 << "  CHTriggerMode: \t\t" << config.CHTriggerMode << "\n"
                 << "  TriggerPolarity: \t\t" << (config.TriggerPolarity ? "Falling" : "Rising") << "\n"
-                << "  EXTAsGate: \t\t\t" << (config.EXTAsGate ? "True" : "False") << "\n"
+                << "  TrgInAsGate: \t\t\t" << (config.TrgInAsGate ? "True" : "False") << "\n"
                 << "  IOLevel: \t\t\t" << (config.IOLevel ? "TTL" : "NIM") << "\n"
                 << "  AcqMode: \t\t\t" << config.AcqMode << "\n"
                 << "  TriggerOverlappingEn: \t" << (config.TriggerOverlappingEn ? "True" : "False") << "\n"
                 << "  MajorityLevel: \t\t" << config.MajorityLevel << "\n"
                 << "  MajorityCoincidenceWindow: \t" << config.MajorityCoincidenceWindow << "\n"
-                << "  MemoryFullModeSelection: \t" << (config.MemoryFullModeSelection ? "True" : "False");
+                << "  MemoryFullMode: \t" << (config.MemoryFullMode ? "True" : "False");
             return oss.str();
         })
         ;
@@ -271,29 +271,73 @@ PYBIND11_MODULE(red_caen, m) {
             py::return_value_policy::reference_internal)
         .def("GetEventsInfoDict", [](RedDigitizer::CAEN<>& self) -> py::dict {
             auto events_info = self.GetEventsInfo();
-            py::list event_counters;
-            py::list event_sizes;
-            py::list board_ids;
-            py::list patterns;
-            py::list trigger_time_tags;
-            py::list channel_masks;
+
+            // creates temperary arrays to store the data
+            const size_t size = events_info.size();
+            uint32_t* event_counters = new uint32_t[size];
+            uint32_t* event_sizes = new uint32_t[size];
+            uint32_t* board_ids = new uint32_t[size];
+            uint32_t* patterns = new uint32_t[size];
+            uint32_t* channel_masks = new uint32_t[size];
+            uint32_t* trigger_time_tags = new uint32_t[size];
+
             // loop through events to extract info
-            for (const auto& info : events_info) {
-                event_counters.append(info->EventCounter);
-                event_sizes.append(info->EventSize);
-                board_ids.append(info->BoardId);
-                patterns.append(info->Pattern);
-                trigger_time_tags.append(info->TriggerTimeTag);
-                channel_masks.append(info->ChannelMask);
+            for (size_t i = 0; i < size; i++) {
+                auto info = events_info[i];
+                event_counters[i] = info->EventCounter;
+                event_sizes[i] = info->EventSize;
+                board_ids[i] = info->BoardId;
+                patterns[i] = info->Pattern;
+                channel_masks[i] = info->ChannelMask;
+                trigger_time_tags[i] = info->TriggerTimeTag;
             }
+
+            // Create a capsule for each buffer so that Python frees it when the NumPy array is deleted.
+            py::capsule cap_event_counter(event_counters, [](void *f) {
+                uint32_t* buf = reinterpret_cast<uint32_t*>(f);
+                delete[] buf;
+            });
+            py::capsule cap_event_size(event_sizes, [](void *f) {
+                uint32_t* buf = reinterpret_cast<uint32_t*>(f);
+                delete[] buf;
+            });
+            py::capsule cap_board_id(board_ids, [](void *f) {
+                uint32_t* buf = reinterpret_cast<uint32_t*>(f);
+                delete[] buf;
+            });
+            py::capsule cap_pattern(patterns, [](void *f) {
+                uint32_t* buf = reinterpret_cast<uint32_t*>(f);
+                delete[] buf;
+            });
+            py::capsule cap_channel_mask(channel_masks, [](void *f) {
+                uint32_t* buf = reinterpret_cast<uint32_t*>(f);
+                delete[] buf;
+            });
+            py::capsule cap_trigger_time_tag(trigger_time_tags, [](void *f) {
+                uint32_t* buf = reinterpret_cast<uint32_t*>(f);
+                delete[] buf;
+            });
+            
+            // Create shape and strides for a 1D array of length n.
+            py::array::ShapeContainer shape = { static_cast<py::ssize_t>(size) };
+            py::array::StridesContainer strides = { static_cast<py::ssize_t>(sizeof(uint32_t)) };
+
+            // Create NumPy arrays that wrap the buffers.
+            py::array_t<uint32_t> arr_event_counter(shape, strides, event_counters, cap_event_counter);
+            py::array_t<uint32_t> arr_event_size(shape, strides, event_sizes, cap_event_size);
+            py::array_t<uint32_t> arr_board_id(shape, strides, board_ids, cap_board_id);
+            py::array_t<uint32_t> arr_pattern(shape, strides, patterns, cap_pattern);
+            py::array_t<uint32_t> arr_channel_mask(shape, strides, channel_masks, cap_channel_mask);
+            py::array_t<uint32_t> arr_trigger_time_tag(shape, strides, trigger_time_tags, cap_trigger_time_tag);
+
             // save data in a dictionary
             py::dict info_dict;
-            info_dict["EventCounter"] = event_counters;
-            info_dict["EventSize"] = event_sizes;
-            info_dict["BoardId"] = board_ids;
-            info_dict["Pattern"] = patterns;
-            info_dict["ChannelMask"] = channel_masks;
-            info_dict["TriggerTimeTag"] = trigger_time_tags;
+            info_dict["EventCounter"] = arr_event_counter;
+            info_dict["EventSize"] = arr_event_size;
+            info_dict["BoardId"] = arr_board_id;
+            info_dict["Pattern"] = arr_pattern;
+            info_dict["ChannelMask"] = arr_channel_mask;
+            info_dict["TriggerTimeTag"] = arr_trigger_time_tag;
             return info_dict;
         })
         .def("GetEventsInBuffer", &RedDigitizer::CAEN<>::GetEventsInBuffer)
@@ -387,6 +431,20 @@ PYBIND11_MODULE(red_caen, m) {
         
             // Return a NumPy array that takes ownership of the buffer.
             return py::array_t<uint16_t>(shape, strides, buffer, free_buffer);
+        })
+        .def("GetDataDict", [](RedDigitizer::CAEN<>& self) -> py::dict {
+            // Get access to python functions defined here
+            py::object py_self = py::cast(self);
+            py::object GetEventsInfoDict = py_self.attr("GetEventsInfoDict");
+            py::object GetWaveforms = py_self.attr("GetWaveforms");
+
+            // Get data fro those functions
+            py::dict data_dict = GetEventsInfoDict().cast<py::dict>();
+            py::array waveforms = GetWaveforms().cast<py::array>();
+        
+            // Insert the waveforms into the dictionary.
+            data_dict["Waveforms"] = waveforms;
+            return data_dict;
         })        
         .def("EnableAcquisition", &RedDigitizer::CAEN<>::EnableAcquisition)
         .def("DisableAcquisition", &RedDigitizer::CAEN<>::DisableAcquisition)

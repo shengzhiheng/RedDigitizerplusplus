@@ -201,7 +201,7 @@ struct CAENGlobalConfig {
 
     // If enabled, the trigger acquisition only happens whenever
     // EXT or TRG-IN is high.
-    bool EXTAsGate = false;
+    bool TrgInAsGate = false;
 
     // External Trigger Mode
     // Trigger Mode comes in four flavors:
@@ -252,7 +252,7 @@ struct CAENGlobalConfig {
     // false -> normal, the board is full whenever all buffers are full.
     // true  -> always one buffer free. The board is full whenever Nb-1 buffers
     // are full, where Nb is the overall number of numbers of buffers allocated.
-    bool MemoryFullModeSelection = true;
+    bool MemoryFullMode = true;
 
     // Triggering edge option
     // 0L/CAEN_DGTZ_TriggerOnRisingEdge -> Rising edge,
@@ -840,8 +840,8 @@ class CAEN {
             _print_if_err("CAEN_DGTZ_OpenDigitizer", __FUNCTION__, "Failed "
                 "to open the port to the digitizer.");
         } else {
-            _logger->info("Connected resource with handle {0} with "
-                "link number {1}, conet node {2} and VME address {3}.",
+            _logger->info("Connected to resource with handle {} with "
+                "link number {}, conet node {} and VME address {}.",
                 _caen_api_handle, ln, cn, addr);
         }
     }
@@ -852,8 +852,8 @@ class CAEN {
         _connection_info_map.erase(id);
 
         if (_is_connected) {
-            _logger->info("Going to disconnect resource with handle {0} with "
-            "link number {1}, conet node {2} and VME address {3}.",
+            _logger->info("Disconnecting resource with handle {} with "
+            "link number {}, conet node {} and VME address {}.",
             _caen_api_handle, LinkNum, ConetNode, VMEBaseAddress);
 
             _err_code = CAEN_DGTZ_SWStopAcquisition(_caen_api_handle);
@@ -1163,7 +1163,7 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
     // 1 = trigger overlapping allowed
     // WriteBits(0x8000, _global_config.TriggerOverlappingEn, 1);
 
-    WriteBits(0x8100, _global_config.MemoryFullModeSelection, 5);
+    WriteBits(0x8100, _global_config.MemoryFullMode, 5);
 
     // Global Trigger mask. So far seems to be applicable for digitizers
     // with and without groups, huh!
@@ -1283,7 +1283,7 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
         // TODO(Any): these configuration bits look like more complex than they
         //  - are, maybe they should be expanded to be its own struct?
         // For 740, to use TRG-IN as Gate / anti-veto
-        if (_global_config.EXTAsGate) {
+        if (_global_config.TrgInAsGate) {
             WriteBits(kGlobalTriggerMaskAddr, 1, 27);  // TRG-IN AND internal trigger,
             // and to serve as gate
             WriteBits(0x811C, 1, 10);  // TRG-IN as gate
@@ -1453,7 +1453,7 @@ template<typename T, size_t N>
 void CAEN<T, N>::RetrieveData() noexcept {
     int& handle = _caen_api_handle;
 
-    if (_has_error or not _is_connected or not _is_acquiring) {
+    if (_has_error or not _is_connected) {
         return;
     }
 
@@ -1474,7 +1474,10 @@ void CAEN<T, N>::RetrieveData() noexcept {
 
 template<typename T, size_t N>
 bool CAEN<T, N>::RetrieveDataUntilNEvents(const uint32_t& n) noexcept {
-    if (_has_error or not _is_connected or not _is_acquiring) {
+    if (n == 0) {
+        return false;
+    }
+    if (_has_error or not _is_connected) {
         return false;
     }
 
