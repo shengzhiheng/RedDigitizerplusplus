@@ -254,6 +254,10 @@ struct CAENGlobalConfig {
     // are full, where Nb is the overall number of numbers of buffers allocated.
     bool MemoryFullMode = true;
 
+    // 0 -> only count accepted triggers
+    // 1 -> count all triggers
+    bool TriggerCountingMode = true;
+
     // Triggering edge option
     // 0L/CAEN_DGTZ_TriggerOnRisingEdge -> Rising edge,
     // 1L/CAEN_DGTZ_TriggerOnFallingEdge -> Falling edge
@@ -1161,9 +1165,11 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
     // Board config register
     // 0 = Trigger overlapping not allowed
     // 1 = trigger overlapping allowed
-    // WriteBits(0x8000, _global_config.TriggerOverlappingEn, 1);
+    WriteBits(0x8000, _global_config.TriggerOverlappingEn, 1);
 
     WriteBits(0x8100, _global_config.MemoryFullMode, 5);
+
+    WriteBits(0x8100, _global_config.TriggerCountingMode, 3);
 
     // Global Trigger mask. So far seems to be applicable for digitizers
     // with and without groups, huh!
