@@ -146,7 +146,7 @@ PYBIND11_MODULE(red_caen, m) {
         .def_readwrite("MaxEventsPerRead", &RedDigitizer::CAENGlobalConfig::MaxEventsPerRead)
         .def_readwrite("RecordLength", &RedDigitizer::CAENGlobalConfig::RecordLength)
         .def_readwrite("PostTriggerPorcentage", &RedDigitizer::CAENGlobalConfig::PostTriggerPorcentage)
-        .def_readwrite("TrgInAsGate", &RedDigitizer::CAENGlobalConfig::TrgInAsGate)
+        .def_readwrite("TrigInAsGate", &RedDigitizer::CAENGlobalConfig::TrigInAsGate)
         .def_readwrite("EXTTriggerMode", &RedDigitizer::CAENGlobalConfig::EXTTriggerMode)
         .def_readwrite("SWTriggerMode", &RedDigitizer::CAENGlobalConfig::SWTriggerMode)
         .def_readwrite("CHTriggerMode", &RedDigitizer::CAENGlobalConfig::CHTriggerMode)
@@ -171,7 +171,7 @@ PYBIND11_MODULE(red_caen, m) {
                 << "  SWTriggerMode: \t\t" << config.SWTriggerMode << "\n"
                 << "  CHTriggerMode: \t\t" << config.CHTriggerMode << "\n"
                 << "  TriggerPolarity: \t\t" << (config.TriggerPolarity ? "Falling" : "Rising") << "\n"
-                << "  TrgInAsGate: \t\t\t" << (config.TrgInAsGate ? "True" : "False") << "\n"
+                << "  TrigInAsGate: \t\t\t" << (config.TrigInAsGate ? "True" : "False") << "\n"
                 << "  IOLevel: \t\t\t" << (config.IOLevel ? "TTL" : "NIM") << "\n"
                 << "  AcqMode: \t\t\t" << config.AcqMode << "\n"
                 << "  TriggerOverlappingEn: \t" << (config.TriggerOverlappingEn ? "True" : "False") << "\n"

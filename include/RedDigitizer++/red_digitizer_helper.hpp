@@ -201,7 +201,7 @@ struct CAENGlobalConfig {
 
     // If enabled, the trigger acquisition only happens whenever
     // EXT or TRG-IN is high.
-    bool TrgInAsGate = false;
+    bool TrigInAsGate = false;
 
     // External Trigger Mode
     // Trigger Mode comes in four flavors:
@@ -1289,7 +1289,7 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
         // TODO(Any): these configuration bits look like more complex than they
         //  - are, maybe they should be expanded to be its own struct?
         // For 740, to use TRG-IN as Gate / anti-veto
-        if (_global_config.TrgInAsGate) {
+        if (_global_config.TrigInAsGate) {
             WriteBits(kGlobalTriggerMaskAddr, 1, 27);  // TRG-IN AND internal trigger,
             // and to serve as gate
             WriteBits(0x811C, 1, 10);  // TRG-IN as gate
