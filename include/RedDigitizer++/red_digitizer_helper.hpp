@@ -276,7 +276,7 @@ struct CAENGlobalConfig {
     // the majority coincidence window. Max is 7.
     uint32_t MajorityLevel = 0;
     // In units of trigger clock. Only 4 LSB bits are counted.
-    uint32_t MajorityCoincidenceWindow = 0;
+    uint32_t MajorityWindow = 0;
 
     // TODO(Any): there are also majority values for TRG-OUT
 };
@@ -1174,7 +1174,7 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
     // Global Trigger mask. So far seems to be applicable for digitizers
     // with and without groups, huh!
     constexpr uint32_t kGlobalTriggerMaskAddr = 0x810C;
-    WriteBits(kGlobalTriggerMaskAddr, _global_config.MajorityCoincidenceWindow, 20, 4);
+    WriteBits(kGlobalTriggerMaskAddr, _global_config.MajorityWindow, 20, 4);
     WriteBits(kGlobalTriggerMaskAddr, _global_config.MajorityLevel, 24, 3);
 
     // Channel stuff
