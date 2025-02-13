@@ -157,7 +157,7 @@ PYBIND11_MODULE(red_caen, m) {
         .def_readwrite("DecimationFactor", &RedDigitizer::CAENGlobalConfig::DecimationFactor)
         .def_readwrite("TriggerCountingMode", &RedDigitizer::CAENGlobalConfig::TriggerCountingMode)
         .def_readwrite("MajorityLevel", &RedDigitizer::CAENGlobalConfig::MajorityLevel)
-        .def_readwrite("MajorityCoincidenceWindow", &RedDigitizer::CAENGlobalConfig::MajorityCoincidenceWindow)
+        .def_readwrite("MajorityWindow", &RedDigitizer::CAENGlobalConfig::MajorityWindow)
         .def_readwrite("TriggerCountingMode", &RedDigitizer::CAENGlobalConfig::TriggerCountingMode)
         .def_readwrite("MemoryFullMode", &RedDigitizer::CAENGlobalConfig::MemoryFullMode)
         .def("__str__", [](const RedDigitizer::CAENGlobalConfig &config) {
@@ -176,7 +176,7 @@ PYBIND11_MODULE(red_caen, m) {
                 << "  AcqMode: \t\t\t" << config.AcqMode << "\n"
                 << "  TriggerOverlappingEn: \t" << (config.TriggerOverlappingEn ? "True" : "False") << "\n"
                 << "  MajorityLevel: \t\t" << config.MajorityLevel << "\n"
-                << "  MajorityCoincidenceWindow: \t" << config.MajorityCoincidenceWindow << "\n"
+                << "  MajorityWindow: \t" << config.MajorityWindow << "\n"
                 << "  TriggerCountingMode: \t" << (config.TriggerCountingMode ? "True" : "False")<< "\n"
                 << "  MemoryFullMode: \t" << (config.MemoryFullMode ? "True" : "False");
             return oss.str();
