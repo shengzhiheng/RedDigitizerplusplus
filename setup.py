@@ -14,7 +14,7 @@ ext_mods = [
 
 setup(
     name="red_caen",
-    version="0.0.6",
+    version="0.0.7",
     description="Python library for wrapper of CAEN driver",
     ext_modules=ext_mods,
     install_requires=["pybind11"],

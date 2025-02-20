@@ -440,9 +440,10 @@ PYBIND11_MODULE(red_caen, m) {
             py::object py_self = py::cast(self);
             py::object GetEventsInfoDict = py_self.attr("GetEventsInfoDict");
             py::object GetWaveforms = py_self.attr("GetWaveforms");
+            py::dict data_dict;
 
             // Get data fro those functions
-            py::dict data_dict = GetEventsInfoDict().cast<py::dict>();
+            py::dict events_info = GetEventsInfoDict().cast<py::dict>();
             py::array waveforms = GetWaveforms().cast<py::array>();
             const auto& group_configs = self.GetGroupConfigurations();
             uint32_t trig_mask = 0;
@@ -461,10 +462,26 @@ PYBIND11_MODULE(red_caen, m) {
                     }
                 }
             }
+
+            // Move software and hardware trigger bits to lower locations
+            py::array pattern = events_info["Pattern"].cast<py::array>();
+            auto buf = pattern.request();
+            uint32_t* data = static_cast<uint32_t*>(buf.ptr);
+            for (size_t i = 0; i < buf.size; ++i) {
+                uint32_t mask = data[i];
+                uint32_t extracted = (mask >> 6) & (0b11 <<4);  // extract bits 10-11
+                mask &= ~(0b11 << 10 | 0b11 << 4);             // clear bits 10-11, 4-5
+                mask |= extracted;                 // insert bits into positions 4-5
+                data[i] = mask;
+            }
         
             // Insert the waveforms and masks into the dictionary.
+            data_dict["EventCounter"] = events_info["EventCounter"];
+            data_dict["TriggerSource"] = pattern; 
+            data_dict["GroupMask"] = events_info["ChannelMask"];
             data_dict["TriggerMask"] = trig_mask;
             data_dict["AcquisitionMask"] = acq_mask;
+            data_dict["TriggerTimeTag"] = events_info["TriggerTimeTag"];
             data_dict["Waveforms"] = waveforms;
             return data_dict;
         })     
