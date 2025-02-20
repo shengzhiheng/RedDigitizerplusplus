@@ -444,11 +444,30 @@ PYBIND11_MODULE(red_caen, m) {
             // Get data fro those functions
             py::dict data_dict = GetEventsInfoDict().cast<py::dict>();
             py::array waveforms = GetWaveforms().cast<py::array>();
+            const auto& group_configs = self.GetGroupConfigurations();
+            uint32_t trig_mask = 0;
+            uint32_t acq_mask = 0;
+
+            // iterate over the groups
+            int ch_per_group = self.ModelConstants.NumChannelsPerGroup;
+            if (self.ModelConstants.NumberOfGroups == 0) {
+                trig_mask = group_configs[0].TriggerMask.get();
+                acq_mask = group_configs[0].AcquisitionMask.get();
+            } else {
+                for (int group = 0; group < self.ModelConstants.NumberOfGroups; group++) {
+                    if (group_configs[group].Enabled) {
+                        trig_mask |= group_configs[group].TriggerMask.get() << (group * ch_per_group);
+                        acq_mask |= group_configs[group].AcquisitionMask.get() << (group * ch_per_group);
+                    }
+                }
+            }
         
-            // Insert the waveforms into the dictionary.
+            // Insert the waveforms and masks into the dictionary.
+            data_dict["TriggerMask"] = trig_mask;
+            data_dict["AcquisitionMask"] = acq_mask;
             data_dict["Waveforms"] = waveforms;
             return data_dict;
-        })        
+        })     
         .def("EnableAcquisition", &RedDigitizer::CAEN<>::EnableAcquisition)
         .def("DisableAcquisition", &RedDigitizer::CAEN<>::DisableAcquisition)
         ;
