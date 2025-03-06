@@ -35,4 +35,4 @@ html_theme = 'sphinx_rtd_theme'
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
 
-autodoc_mock_imports = ["CAENComm", "CAENDigitizer", "CAENVME", "CAENUSB"]
+autodoc_mock_imports = ["red_caen"]
