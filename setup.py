@@ -4,8 +4,8 @@ import pybind11
 from pybind11.setup_helpers import Pybind11Extension
 import os
 
-on_rtd = os.environ.get("READTHEDOCS") == "True"
-if on_rtd:
+# skip module import if compiling for ReadTheDocs
+if os.environ.get("READTHEDOCS"):
     ext_mods = []
 else:
     ext_mods = [
