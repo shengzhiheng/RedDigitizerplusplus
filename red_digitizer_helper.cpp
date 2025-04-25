@@ -25,6 +25,7 @@ CAEN_DGTZ_UINT16_EVENT_Python convertToPythonData(const CAEN_DGTZ_UINT16_EVENT_t
 
 PYBIND11_MODULE(red_caen, m) {
     m.doc() = "Python bindings for RedDigitizer++";
+    m.attr("__version__") = VERSION;
 
     py::class_<RedDigitizer::CAENDigitizerModelConstants>(m, "CAENDigitizerModelConstants")
         .def_readonly("ADCResolution", &RedDigitizer::CAENDigitizerModelConstants::ADCResolution)
