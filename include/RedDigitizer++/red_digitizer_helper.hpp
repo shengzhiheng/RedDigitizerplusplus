@@ -1161,14 +1161,19 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
     _err_code = CAEN_DGTZ_SetIOLevel(handle, _global_config.IOLevel);
     _print_if_err("CAEN_DGTZ_SetIOLevel", __FUNCTION__);
 
-
     // Board config register
     // 0 = Trigger overlapping not allowed
     // 1 = trigger overlapping allowed
     WriteBits(0x8000, _global_config.TriggerOverlappingEn, 1);
 
+    // Memory full mode
+    // 0 = Normal
+    // 1 = One buffer free
     WriteBits(0x8100, _global_config.MemoryFullMode, 5);
 
+    // Trigger counting mode
+    // 0 = only count accepted triggers
+    // 1 = count all triggers
     WriteBits(0x8100, _global_config.TriggerCountingMode, 3);
 
     // Global Trigger mask. So far seems to be applicable for digitizers
@@ -1176,6 +1181,14 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
     constexpr uint32_t kGlobalTriggerMaskAddr = 0x810C;
     WriteBits(kGlobalTriggerMaskAddr, _global_config.MajorityWindow, 20, 4);
     WriteBits(kGlobalTriggerMaskAddr, _global_config.MajorityLevel, 24, 3);
+
+    // GPO TRG-OUT settings
+    // Always enabled, use same settings as for internal trigger
+    constexpr uint32_t kGPOAddr = 0x8110;
+    WriteBits(kGPOAddr, 0b10, 8, 2); // Majority mode
+    WriteBits(kGPOAddr, _global_config.MajorityLevel, 10, 3);
+    WriteBits(kGPOAddr, (_global_config.EXTTriggerMode == CAEN_DGTZ_TriggerMode_t::CAEN_DGTZ_TRGMODE_DISABLED) ? 0 : 1, 30, 1);
+    WriteBits(kGPOAddr, (_global_config.SWTriggerMode == CAEN_DGTZ_TriggerMode_t::CAEN_DGTZ_TRGMODE_DISABLED) ? 0 : 1, 31, 1);
 
     // Channel stuff
     _group_configs = gr_configs;
@@ -1235,6 +1248,8 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
 
         _err_code = CAEN_DGTZ_SetGroupEnableMask(handle, group_mask);
         _print_if_err("CAEN_DGTZ_SetGroupEnableMask", __FUNCTION__);
+
+        WriteBits(kGPOAddr, group_mask, 0, 4); // Write group mask to GPO
 
         _err_code = CAEN_DGTZ_SetGroupSelfTrigger(handle,
                                                   _global_config.CHTriggerMode,
@@ -1304,10 +1319,6 @@ void CAEN<T, N>::Setup(const CAENGlobalConfig& global_config,
             // on internal signal
         }
         WriteBits(0x811C, 0b01, 21, 2);
-
-        // read_register(res, 0x8110, word);
-        // word |= 1; // enable group 0 to participate in GPO
-        // write_register(res, 0x8110, word);
 
     } else {
         // custom error message if not above models
@@ -1387,9 +1398,8 @@ void CAEN<T, N>::WriteRegister(const uint32_t& addr, const uint32_t& value) noex
     }
 
     _err_code = CAEN_DGTZ_WriteRegister(_caen_api_handle, addr, value);
-    _print_if_err("CAEN_DGTZ_WriteRegister", __FUNCTION__, "Failed to write "
-                                                           "register " +
-                                                           std::to_string(addr));
+    _print_if_err("CAEN_DGTZ_WriteRegister", __FUNCTION__, 
+        "Failed to write " + std::to_string(value) + " to register " + std::to_string(addr));
 }
 
 template<typename T, size_t N>
@@ -1399,9 +1409,8 @@ void CAEN<T, N>::ReadRegister(const uint32_t& addr, uint32_t& value) noexcept {
     }
 
     _err_code = CAEN_DGTZ_ReadRegister(_caen_api_handle, addr, &value);
-    _print_if_err("CAEN_DGTZ_ReadRegister", __FUNCTION__, "Failed to read "
-                                                          "register " +
-                                                          std::to_string(addr));
+    _print_if_err("CAEN_DGTZ_ReadRegister", __FUNCTION__, 
+        "Failed to read " + std::to_string(value) + " from register " + std::to_string(addr));
 }
 
 template<typename T, size_t N>
@@ -1414,9 +1423,8 @@ void CAEN<T, N>::WriteBits(const uint32_t& addr,
     // First read the register
     uint32_t read_word = 0;
     _err_code = CAEN_DGTZ_ReadRegister(_caen_api_handle, addr, &read_word);
-    _print_if_err("CAEN_DGTZ_ReadRegister", __FUNCTION__, "Failed to read "
-                                                          "register " +
-                                                          std::to_string(addr));
+    _print_if_err("CAEN_DGTZ_ReadRegister", __FUNCTION__, 
+        "Failed to read " + std::to_string(read_word) + " from register " + std::to_string(addr));
 
     uint32_t bit_mask = ~(((1 << len) - 1) << pos);
     read_word = read_word & bit_mask; //mask the register value
@@ -1425,9 +1433,8 @@ void CAEN<T, N>::WriteBits(const uint32_t& addr,
     uint32_t value_bits = (value & ((1 << len) - 1)) << pos;
     // Combine masked value read from register with new bits
     _err_code = CAEN_DGTZ_WriteRegister(_caen_api_handle, addr, read_word | value_bits);
-    _print_if_err("CAEN_DGTZ_WriteRegister", __FUNCTION__, "Failed to write "
-                                                           "register " +
-                                                           std::to_string(addr));
+    _print_if_err("CAEN_DGTZ_WriteRegister", __FUNCTION__, 
+        "Failed to write " + std::to_string(read_word | value_bits) + " to register " + std::to_string(addr));
 }
 
 template<typename T, size_t N>
@@ -1503,7 +1510,6 @@ bool CAEN<T, N>::RetrieveDataUntilNEvents(const uint32_t& n) noexcept {
     // so dont do it!
 
     RetrieveData();
-
     return true;
 }
 
@@ -1647,25 +1653,6 @@ std::string translate_caen_error_code(const CAEN_DGTZ_ErrorCode& err) {
             return "The function is not yet implemented";
     }
 }
-/// End Data Acquisition functions
-//
-/// Mathematical functions
-
-
-
-/// End Mathematical functions
-//
-/// File functions
-
-// Saves the digitizer data in the Binary format SBC collboration is using
-// This only writes the header at the beginning of the file.
-// Meant to be written once.
-//std::string sbc_init_file(CAEN&) noexcept;
-//
-//// Saves the digitizer data in the Binary format SBC collboration is using
-//std::string sbc_save_func(CAENEvent&, CAEN&) noexcept;
-
-/// End File functions
 
 }   // namespace RedDigitizer
 #endif // RD_HELPER_H
